@@ -14,4 +14,5 @@ RUN cd /var/www/readthedocs.org/readthedocs \
 RUN pip install supervisor
 ADD files/supervisord.conf /etc/supervisord.conf
 
+EXPOSE 8000
 CMD ["supervisord"]
