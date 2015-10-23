@@ -1,18 +1,18 @@
-FROM python:2.7
-
+FROM library/python:2.7
 MAINTAINER Lucid Operations "http://github.com/luciddg"
 
 # install readthedocs
+ENV rtd_home /var/www/readthedocs.org
 RUN mkdir /var/www \
-  && git clone https://github.com/rtfd/readthedocs.org.git /var/www/readthedocs.org
-RUN pip install -r /var/www/readthedocs.org/requirements.txt
-RUN /var/www/readthedocs.org/manage.py syncdb --noinput \
-  && /var/www/readthedocs.org/manage.py makemigrations \
-  && /var/www/readthedocs.org/manage.py migrate
+  && git clone https://github.com/rtfd/readthedocs.org.git ${rtd_home}
+WORKDIR ${rtd_home}
+RUN pip install -r requirements.txt
+RUN ./manage.py syncdb --noinput \
+  && ./manage.py makemigrations \
+  && ./manage.py migrate
 
-# install uwsgi and supervisord
-RUN pip install supervisor
-ADD files/supervisord.conf /etc/supervisord.conf
+# install uwsgi
+RUN pip install uwsgi
 
 EXPOSE 8000
-CMD ["supervisord"]
+CMD ["./manage.py", "print_settings"]
