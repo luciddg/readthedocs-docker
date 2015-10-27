@@ -1,16 +1,57 @@
+redis-service:
+  image: 'library/redis:3.0.4'
+  container_name: 'redis-999-99-service'
+es-service:
+  image: 'library/elasticsearch:1.7.3'
+  container_name: 'es-999-99-service'
+rtd-data:
+  build: .
+  container_name: 'rtd-999-99-data'
+  command: 'echo "rtd dvc"'
+  volumes:
+    - '/var/www/readthedocs.org'
+    - './files/settings.py:/var/www/readthedocs.org/local_settings.py:ro'
+rtd-worker:
+  build: .
+  container_name: 'rtd-999-99-worker'
+  restart: 'always'
+  command: 'uwsgi'
+  volumes_from:
+    - rtd-data
+  volumes:
+    - '/var/run/docker.sock:/var/run/docker.sock'
+  links:
+    - 'redis-service:redis'
+    - 'es-service:elasticsearch'
+  environment:
+      UWSGI_HTTP: '0.0.0.0:8000'
+      UWSGI_MODULE: 'readthedocs.wsgi'
+      UWSGI_MASTER: 1
+      UWSGI_PROCESSES: 4
+      UWSGI_ENV: 'DJANGO_SETTINGS_MODULE=readthedocs.settings.sqlite'
 rtd-service:
   build: .
   container_name: 'rtd-999-99-service'
   restart: 'always'
   command: 'uwsgi'
+  volumes_from:
+    - rtd-data
+  links:
+    - 'redis-service:redis'
+    - 'es-service:elasticsearch'
+    - 'rtd-worker:slumber'
   environment:
       UWSGI_SOCKET: '0.0.0.0:8000'
       UWSGI_MODULE: 'readthedocs.wsgi'
+      UWSGI_MASTER: 1
+      UWSGI_PROCESSES: 4
       UWSGI_ENV: 'DJANGO_SETTINGS_MODULE=readthedocs.settings.sqlite'
 nginx-proxy:
   image: 'library/nginx:1.9.0'
   container_name: 'nginx-999-99-proxy'
   restart: 'always'
+  volumes_from:
+    - rtd-data
   volumes:
     - './files/nginx.conf:/etc/nginx/conf.d/default.conf:ro'
   links:
