@@ -7,12 +7,13 @@ RUN mkdir /var/www \
   && git clone https://github.com/rtfd/readthedocs.org.git ${rtd_home}
 WORKDIR ${rtd_home}
 RUN pip install -r requirements.txt
-RUN ./manage.py syncdb --noinput \
-  && ./manage.py makemigrations \
-  && ./manage.py migrate
+RUN python manage.py syncdb --noinput \
+  && python manage.py makemigrations \
+  && python manage.py migrate \
+  && python manage.py collectstatic --noinput
 
 # install uwsgi
 RUN pip install uwsgi
 
 EXPOSE 8000
-CMD ["./manage.py", "print_settings"]
+CMD ["python", "manage.py", "print_settings"]
